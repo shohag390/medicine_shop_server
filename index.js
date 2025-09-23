@@ -1,0 +1,87 @@
+const express = require("express");
+const cors = require("cors");
+const { MongoClient, ObjectId, ServerApiVersion } = require("mongodb");
+require("dotenv").config();
+
+const app = express();
+const port = process.env.PORT || 5000;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+
+// MongoDB connection string
+const uri = `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASS}@medicineshop.odna6cz.mongodb.net/?retryWrites=true&w=majority&appName=medicineshop`;
+
+const client = new MongoClient(uri, {
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+    },
+});
+
+
+async function run() {
+    try {
+        await client.connect();
+
+        // Collections
+        const db = client.db("medical_shop");
+        const usersCollection = db.collection('users');
+        const medicinesCollection = db.collection('medicines');
+
+        // Root
+        app.get("/", (req, res) => {
+            res.send("Medical Shop API Running");
+        });
+
+        // Create User 
+        app.post('/users', async (req, res) => {
+            const email = req.body.email;
+            const userExists = await usersCollection.findOne({ email })
+            if (userExists) {
+                // update last log in
+                return res.status(200).send({ message: 'User already exists', inserted: false });
+            }
+            const user = req.body;
+            const result = await usersCollection.insertOne(user);
+            res.send(result);
+        })
+
+        // Add new medicine
+        app.post("/medicines", async (req, res) => {
+            try {
+                const medicine = req.body;
+                const result = await medicinesCollection.insertOne(medicine);
+                res.status(201).send({ success: true, message: "Medicine added", result });
+            } catch (err) {
+                res.status(500).send({ success: false, error: err.message });
+            }
+        });
+
+        // GET mEDICINE
+        app.get("/medicines", async (req, res) => {
+            const mmedicine = await medicinesCollection.find().toArray();
+            res.send(mmedicine)
+        })
+
+
+
+
+
+
+
+
+        console.log("Connected to MongoDB successfully");
+    } catch (err) {
+        console.error(err);
+    }
+}
+run().catch(console.dir);
+
+// Run server
+app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
+});

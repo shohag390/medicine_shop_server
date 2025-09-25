@@ -50,7 +50,10 @@ async function run() {
             res.send(result);
         })
 
-        // Add new medicine
+
+
+
+        // ✅ Add new medicine
         app.post("/medicines", async (req, res) => {
             try {
                 const medicine = req.body;
@@ -61,18 +64,66 @@ async function run() {
             }
         });
 
-        // GET mEDICINE
+        // ✅ Get all medicines (with optional email filter)
         app.get("/medicines", async (req, res) => {
-            const mmedicine = await medicinesCollection.find().toArray();
-            res.send(mmedicine)
-        })
+            try {
+                const email = req.query.email;
+                let query = {};
+                if (email) {
+                    query = { created_by: email }; // fetch only medicines created by this user
+                }
+                const result = await medicinesCollection.find(query).toArray();
+                res.send(result);
+            } catch (err) {
+                res.status(500).send({ success: false, error: err.message });
+            }
+        });
 
+        // ✅ Get single medicine by ID
+        app.get("/medicines/:id", async (req, res) => {
+            try {
+                const id = req.params.id;
+                const result = await medicinesCollection.findOne({ _id: new ObjectId(id) });
+                if (!result) {
+                    return res.status(404).send({ success: false, message: "Medicine not found" });
+                }
+                res.send(result);
+            } catch (err) {
+                res.status(500).send({ success: false, error: err.message });
+            }
+        });
 
+        // ✅ Update medicine by ID
+        app.patch("/medicines/:id", async (req, res) => {
+            try {
+                const id = req.params.id;
+                const updatedData = req.body;
+                const result = await medicinesCollection.updateOne(
+                    { _id: new ObjectId(id) },
+                    { $set: updatedData }
+                );
+                if (result.matchedCount === 0) {
+                    return res.status(404).send({ success: false, message: "Medicine not found" });
+                }
+                res.send({ success: true, message: "Medicine updated", result });
+            } catch (err) {
+                res.status(500).send({ success: false, error: err.message });
+            }
+        });
 
-
-
-
-
+        // ✅ Delete medicine by ID
+        app.delete("/medicines/:id", async (req, res) => {
+            try {
+                const id = req.params.id;
+                const result = await medicinesCollection.deleteOne({ _id: new ObjectId(id) });
+                if (result.deletedCount === 0) {
+                    return res.status(404).send({ success: false, message: "Medicine not found" });
+                }
+                res.send({ success: true, message: "Medicine deleted", result });
+            } catch (err) {
+                res.status(500).send({ success: false, error: err.message });
+            }
+        });
 
         console.log("Connected to MongoDB successfully");
     } catch (err) {

@@ -12,9 +12,9 @@ app.use(express.json());
 
 
 // MongoDB connection string
-const uri = `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASS}@medicineshop.odna6cz.mongodb.net/?retryWrites=true&w=majority&appName=medicineshop`;
+const url = `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASS}@medicineshop.odna6cz.mongodb.net/?retryWrites=true&w=majority&appName=medicineshop`;
 
-const client = new MongoClient(uri, {
+const client = new MongoClient(url, {
     serverApi: {
         version: ServerApiVersion.v1,
         strict: true,
@@ -25,7 +25,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
     try {
-        await client.connect();
+        // await client.connect();
 
         // Collections
         const db = client.db("medical_shop");
